@@ -1,0 +1,5 @@
+*.h5
+*.pyc
+*.swp
+.ipynb_checkpoints
+.DS_Store
