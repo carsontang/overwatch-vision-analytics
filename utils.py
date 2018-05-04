@@ -20,30 +20,14 @@ def crop_region(full_image, bbox):
     return full_image[y:y+h, x:x+w]
 
 
-def create_grid(images, n_rows=4, n_cols=4):
+def _create_grid(images, indices, n_rows=4, n_cols=4):
     h, w, *other = images[0].shape
+    k = n_rows * n_cols
     display_grid = np.zeros((n_rows * h, n_cols * w))
-    for row in range(n_rows):
-        for col in range(n_cols):
-            row_start = row * h
-            row_end = (row + 1) * h
-            col_start = col * w
-            col_end = (col + 1) * w
-            display_grid[row_start:row_end, col_start:col_end] = images[row * n_cols + col]
-    return display_grid
-
-
-def create_rand_grid(images, n_rows=4, n_cols=4):
-    h, w, *other = images[0].shape
-    n_images = n_rows * n_cols
-    display_grid = np.zeros((n_rows * h, n_cols * w))
-
-    # Sample N images to display
-    rand_idx = random.sample(range(len(images)), n_images)
 
     row_col_pairs = [(row, col) for row in range(n_rows) for col in range(n_cols)]
 
-    for idx, (row, col) in zip(rand_idx, row_col_pairs):
+    for idx, (row, col) in zip(indices, row_col_pairs):
         row_start = row * h
         row_end = (row + 1) * h
         col_start = col * w
@@ -51,6 +35,28 @@ def create_rand_grid(images, n_rows=4, n_cols=4):
         display_grid[row_start:row_end, col_start:col_end] = images[idx]
 
     return display_grid
+
+
+def create_grid(images, n_rows=4, n_cols=4):
+    """
+    Creates a n_rows x n_cols grid of the images corresponding
+    to the first K indices (K = n_rows * n_cols). This grid itself
+    is a large NumPy array.
+    """
+    k = n_rows * n_cols
+    indices = [i for i in range(k)]
+    return _create_grid(images, indices, n_rows, n_cols)
+
+
+def create_rand_grid(images, n_rows=4, n_cols=4):
+    """
+    Creates a n_rows x n_cols grid of the images corresponding
+    to K randomly chosen indices (K = n_rows * n_cols). This grid itself
+    is a large NumPy array.
+    """
+    k = n_rows * n_cols
+    indices = random.sample(range(len(images)), k)
+    return _create_grid(images, indices, n_rows, n_cols)
 
 
 dirname = '/Users/ctang/Documents/overwatch_object_detection/overwatch_part1_frames/smaller_dataset'
