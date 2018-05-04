@@ -22,7 +22,6 @@ def crop_region(full_image, bbox):
 
 def _create_grid(images, indices, n_rows=4, n_cols=4):
     h, w, *other = images[0].shape
-    k = n_rows * n_cols
     display_grid = np.zeros((n_rows * h, n_cols * w))
 
     row_col_pairs = [(row, col) for row in range(n_rows) for col in range(n_cols)]
