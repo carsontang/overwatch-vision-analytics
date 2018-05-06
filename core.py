@@ -137,32 +137,46 @@ def load_straight_dataset():
     return x_valid, y_valid
 
 
-def load_synthetic_ow_ult_meter_data():
+def load_synthetic_ow_ult_meter_data(generate=False):
 	"""
 	Create a dataset that's like the MNIST dataset
 	for the Overwatch Ult Charge meter. The digits are upright
 	instead of slanted.
 	"""
-	canvas_size = (28, 28)
-	upper_lefthand_corner = (8, -3)
 
-	font = ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), 32)
-	canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
-	text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
+	if not generate and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL):
+		print('Loading generated training dataset...')
+		with open(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL, 'rb') as f:
+			x_train, y_train = pickle.load(f)
+	else:
+		print('Generating training dataset...')
+		canvas_size = (28, 28)
+		upper_lefthand_corner = (8, -3)
 
-	x_train = []
-	y_train = []
+		font = ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), 32)
+		canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
+		text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
 
-	for digit in range(1):
-		print('Generating data for "%d"' % digit)
-		for canvas_color in canvas_colors:
-			for text_color in text_colors:
-				image = PIL.Image.new("RGB", canvas_size, canvas_color)
-				canvas = ImageDraw.Draw(image)
-				canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
-				np_image = np.array(image)
-				x_train.append(color.rgb2gray(np_image))
-				y_train.append(digit)
+		x_train = []
+		y_train = []
+
+		for digit in range(10):
+			print('Generating data for "%d"' % digit)
+			for canvas_color in canvas_colors:
+				for text_color in text_colors:
+					image = PIL.Image.new("RGB", canvas_size, canvas_color)
+					canvas = ImageDraw.Draw(image)
+					canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
+					np_image = np.array(image)
+					x_train.append(color.rgb2gray(np_image))
+					y_train.append(digit)
+
+		x_train, y_train = np.array(x_train), np.array(y_train)
+		y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
+
+		with open(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL, 'wb') as f:
+			pickle.dump((x_train, y_train), f)
+			print('Done serializing training dataset.')
 
 	"""
 	TODO:
@@ -174,18 +188,28 @@ def load_synthetic_ow_ult_meter_data():
 	so there is no need to divide by 255. However, make sure its type
 	matches the MNIST x_train type
 	
+	MNIST
+	is 0 <= x_train <= 1? yes
+	is 0 <= x_test <= 1? yes
+	
+	OW
+	is 0 <= x_train <= 1? yes
+	is 0 <= x_test <= 1? yes
+	
+	test code:
+	np.any(x_train[100] > 1) or np.any(x_test[100] > 1)
+	
+	To understand the Keras training output,
+	know that the loss/accuracy is calculated per batch,
+	which in our case is 128 images.
 	"""
-	y_train = np.array(y_train)
-	y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
-
 	x_test, y_test = load_straight_dataset()
-	x_train = np.array(x_train)
 	x_train, x_test, input_shape = _reshape(x_train, x_test)
 
 	return (x_train, y_train), (x_test, y_test), input_shape
 
 
-def mnist_model(force_train=False, dataloader=load_mnist_data):
+def mnist_model(force_train=False, dataloader_fn=load_mnist_data):
 	"""
 	Train a simple ConvNet on the MNIST dataset,
 	or loads a pretrained model if one exists. MNIST-like data
@@ -198,7 +222,7 @@ def mnist_model(force_train=False, dataloader=load_mnist_data):
 
 	print('Pretrained model does not exist. Training a model...')
 
-	(x_train, y_train), (x_test, y_test), input_shape = dataloader()
+	(x_train, y_train), (x_test, y_test), input_shape = dataloader_fn()
 
 	model = Sequential()
 	model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
