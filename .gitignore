@@ -3,3 +3,8 @@
 *.swp
 .ipynb_checkpoints
 .DS_Store
+*.pkl
+*.csv
+data/*
+.idea/*
+
