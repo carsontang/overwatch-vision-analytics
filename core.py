@@ -99,8 +99,8 @@ def load_straight_dataset(load_cached=False):
             region = transform.warp(region, inverse_map=shear)
             five = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
             three = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-            five = color.rgb2gray(five)
-            three = color.rgb2gray(three)
+            # five = color.rgb2gray(five)
+            # three = color.rgb2gray(three)
             x_valid.append(five)
             y_valid.append(5)
             x_valid.append(three)
@@ -114,8 +114,8 @@ def load_straight_dataset(load_cached=False):
             region = transform.warp(region, inverse_map=shear)
             five = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
             four = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-            five = color.rgb2gray(five)
-            four = color.rgb2gray(four)
+            # five = color.rgb2gray(five)
+            # four = color.rgb2gray(four)
             x_valid.append(five)
             y_valid.append(5)
             x_valid.append(four)
@@ -129,7 +129,9 @@ def load_straight_dataset(load_cached=False):
 
     x_valid = np.array(x_valid)
     y_valid = np.array(y_valid)
-    x_valid = x_valid.reshape(len(x_valid), 28, 28, 1)
+    n, h, w, *rest = x_valid.shape
+    c = rest[0] if rest else 1
+    x_valid = x_valid.reshape(n, h, w, c)
     y_valid = keras.utils.to_categorical(y_valid, conf.NUM_CLASSES)
 
     return x_valid, y_valid
