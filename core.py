@@ -135,14 +135,14 @@ def load_straight_dataset(load_cached=False):
     return x_valid, y_valid
 
 
-def load_synthetic_ow_ult_meter_data(generate=False):
+def load_synthetic_ow_ult_meter_data(load_cached=False):
     """
     Create a dataset that's like the MNIST dataset
     for the Overwatch Ult Charge meter. The digits are upright
     instead of slanted.
     """
 
-    if not generate and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL):
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL):
         print('Loading generated training dataset...')
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL, 'rb') as f:
             x_train, y_train = pickle.load(f)
