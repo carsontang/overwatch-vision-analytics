@@ -9,8 +9,18 @@ def crop_region(full_image, bbox):
 
 
 def _create_grid(images, indices, n_rows=4, n_cols=4):
-    h, w, *other = images[0].shape
-    display_grid = np.zeros((n_rows * h, n_cols * w))
+    n, h, w, *rest = images.shape
+    c = rest[0] if rest else 1
+
+    # Grayscale and RGB need differing grid dimensions
+    if c > 1:
+        display_grid = np.zeros((n_rows * h, n_cols * w, c))
+    else:
+        display_grid = np.zeros((n_rows * h, n_cols * w))
+
+    # Uncomment the line below if you want to visualize
+    # digit data with smooth contours.
+    # display_grid = display_grid.astype(np.uint8)
 
     row_col_pairs = [(row, col) for row in range(n_rows) for col in range(n_cols)]
 
@@ -19,7 +29,11 @@ def _create_grid(images, indices, n_rows=4, n_cols=4):
         row_end = (row + 1) * h
         col_start = col * w
         col_end = (col + 1) * w
-        display_grid[row_start:row_end, col_start:col_end] = images[idx]
+
+        if c > 1:
+            display_grid[row_start:row_end, col_start:col_end, :] = images[idx]
+        else:
+            display_grid[row_start:row_end, col_start:col_end] = images[idx].reshape((h,w))
 
     return display_grid
 
@@ -27,10 +41,11 @@ def _create_grid(images, indices, n_rows=4, n_cols=4):
 def create_grid(images, n_rows=4, n_cols=4):
     """
     Creates a n_rows x n_cols grid of the images corresponding
-    to the first K indices (K = n_rows * n_cols). This grid itself
+    to the first K indices (K = n_rows * n_cols). If K > # of images,
+    simply display all the images. This grid itself
     is a large NumPy array.
     """
-    k = n_rows * n_cols
+    k = min(n_rows * n_cols, len(images))
     indices = [i for i in range(k)]
     return _create_grid(images, indices, n_rows, n_cols)
 
@@ -38,9 +53,10 @@ def create_grid(images, n_rows=4, n_cols=4):
 def create_rand_grid(images, n_rows=4, n_cols=4):
     """
     Creates a n_rows x n_cols grid of the images corresponding
-    to K randomly chosen indices (K = n_rows * n_cols). This grid itself
+    to K randomly chosen indices (K = n_rows * n_cols). If K > # of images,
+    simply display all the images. This grid itself
     is a large NumPy array.
     """
-    k = n_rows * n_cols
+    k = min(n_rows * n_cols, len(images))
     indices = random.sample(range(len(images)), k)
     return _create_grid(images, indices, n_rows, n_cols)
