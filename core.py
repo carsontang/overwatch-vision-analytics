@@ -29,10 +29,15 @@ from utils import crop_region
 Bbox = collections.namedtuple('Bbox', ['x', 'y', 'w', 'h'])
 
 
+def _shape(x):
+    n, h, w, *rest = x.shape
+    c = rest[0] if rest else 1
+    return n, h, w, c
+
+
 def _reshape(x_train, x_test):
 
-    _, img_rows, img_cols, *rest = x_train.shape
-    c = rest[0] if rest else 1
+    _, img_rows, img_cols, c = _shape(x_train)
 
     if K.image_data_format() == 'channels_first':
         x_train = x_train.reshape(x_train.shape[0], c, img_rows, img_cols)
@@ -129,8 +134,7 @@ def load_straight_dataset(load_cached=False):
 
     x_valid = np.array(x_valid)
     y_valid = np.array(y_valid)
-    n, h, w, *rest = x_valid.shape
-    c = rest[0] if rest else 1
+    n, h, w, c = _shape(x_valid)
     x_valid = x_valid.reshape(n, h, w, c)
     y_valid = keras.utils.to_categorical(y_valid, conf.NUM_CLASSES)
 
