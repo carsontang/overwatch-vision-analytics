@@ -31,17 +31,17 @@ Bbox = collections.namedtuple('Bbox', ['x', 'y', 'w', 'h'])
 
 def _reshape(x_train, x_test):
 
-    # Assume the data is MNIST or MNIST-like
-    img_rows, img_cols = 28, 28
+    _, img_rows, img_cols, *rest = x_train.shape
+    c = rest[0] if rest else 1
 
     if K.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
-        input_shape = (1, img_rows, img_cols)
+        x_train = x_train.reshape(x_train.shape[0], c, img_rows, img_cols)
+        x_test = x_test.reshape(x_test.shape[0], c, img_rows, img_cols)
+        input_shape = (c, img_rows, img_cols)
     else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
-        input_shape = (img_rows, img_cols, 1)
+        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, c)
+        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, c)
+        input_shape = (img_rows, img_cols, c)
 
     return x_train, x_test, input_shape
 
