@@ -62,7 +62,7 @@ def load_mnist_data():
     return (x_train, y_train), (x_test, y_test), input_shape
 
 
-def load_straight_dataset():
+def load_straight_dataset(load_cached=False):
     """
     Parse out tens and ones digits from each image,
     and straighten each digit
@@ -85,7 +85,7 @@ def load_straight_dataset():
     end = 5574
     fifty_four = [os.path.join(dirname, "frame_0%d.png" % i) for i in range(start, end + 1)]
 
-    if os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
             x_valid, y_valid = pickle.load(f)
             print('Deserialized validation dataset from Pickle file.')
