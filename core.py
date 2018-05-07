@@ -129,7 +129,6 @@ def load_straight_dataset(load_cached=False):
 
     x_valid = np.array(x_valid)
     y_valid = np.array(y_valid)
-    # plt.imshow(create_grid(x_valid[:200], 14, 14), cmap='gray')
     x_valid = x_valid.reshape(len(x_valid), 28, 28, 1)
     y_valid = keras.utils.to_categorical(y_valid, conf.NUM_CLASSES)
 
