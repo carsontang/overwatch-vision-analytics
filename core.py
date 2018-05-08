@@ -3,6 +3,7 @@ import datetime
 import os
 import pickle
 import random
+import re
 
 import cv2
 import matplotlib.image as mpimg
@@ -74,21 +75,10 @@ def load_straight_dataset(load_cached=False):
     """
     tens_bbox = Bbox(x=2, y=0, w=15, h=30)
     ones_bbox = Bbox(x=17, y=0, w=15, h=30)
+    solo_ones_bbox = Bbox(x=0, y=0, w=23, h=30)
     ult_charge_bbox = Bbox(x=625, y=590, w=30, h=30)
     shear = transform.AffineTransform(shear=0.2)
     warped_size = (28, 28)
-
-    dirname = '/Users/ctang/Documents/overwatch_object_detection/overwatch_part1_frames/smaller_dataset'
-
-    # Ult charge at 53%
-    start = 5474
-    end = 5541
-    fifty_three = [os.path.join(dirname, "frame_0%d.png" % i) for i in range(start, end + 1)]
-
-    # Ult charge at 54%
-    start = 5542
-    end = 5574
-    fifty_four = [os.path.join(dirname, "frame_0%d.png" % i) for i in range(start, end + 1)]
 
     if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
@@ -97,36 +87,42 @@ def load_straight_dataset(load_cached=False):
     else:
         x_valid = []
         y_valid = []
+        directories = [file for file in os.listdir(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR)\
+                       if os.path.isdir(os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, file))]
+        ult_dirs = []
+        for file in directories:
+            m = re.search('(^\d{1,3}$)', file)
+            if m and m.groups():
+                ult_dirs.append(file)
 
-        for imgfile in fifty_three:
-            img = mpimg.imread(imgfile)
-            region = crop_region(img, ult_charge_bbox)
-            region = transform.warp(region, inverse_map=shear)
-            five = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-            three = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-            # five = color.rgb2gray(five)
-            # three = color.rgb2gray(three)
-            x_valid.append(five)
-            y_valid.append(5)
-            x_valid.append(three)
-            y_valid.append(3)
+        for dirname in ult_dirs:
+            ult_charge = int(dirname)
+            tens_digit = ult_charge // 10
+            ones_digit = ult_charge % 10
 
-        print('Done producing 5 and 3 images.')
+            print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
+            directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
 
-        for imgfile in fifty_four:
-            img = mpimg.imread(imgfile)
-            region = crop_region(img, ult_charge_bbox)
-            region = transform.warp(region, inverse_map=shear)
-            five = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-            four = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-            # five = color.rgb2gray(five)
-            # four = color.rgb2gray(four)
-            x_valid.append(five)
-            y_valid.append(5)
-            x_valid.append(four)
-            y_valid.append(4)
+            for file in os.listdir(directory):
+                img = mpimg.imread(os.path.join(directory, file))
+                region = crop_region(img, ult_charge_bbox)
+                region = transform.warp(region, inverse_map=shear)
 
-        print('Done producing 5 and 4 images.')
+                if tens_digit == 0:
+                    digit = cv2.resize(crop_region(region, solo_ones_bbox), \
+                                            warped_size, interpolation=cv2.INTER_LINEAR)
+                    digit = color.rgb2gray(digit)
+                    x_valid.append(digit)
+                    y_valid.append(ones_digit)
+                else:
+                    tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
+                    ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
+                    tens = color.rgb2gray(tens)
+                    ones = color.rgb2gray(ones)
+                    x_valid.append(tens)
+                    y_valid.append(tens_digit)
+                    x_valid.append(ones)
+                    y_valid.append(ones_digit)
 
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'wb') as f:
             pickle.dump((x_valid, y_valid), f)
