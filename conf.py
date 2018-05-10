@@ -14,3 +14,4 @@ OW_ULT_CHARGE_EVAL_DATASET_DIR2 = '/Users/ctang/Documents/overwatch_object_detec
 OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL = os.path.join(DATA_DIR, 'synthetic_train_dataset.pkl')
 OW_ULT_CHARGE_VALID_DATASET_PKL = os.path.join(DATA_DIR, 'validation_dataset.pkl')
 OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL = os.path.join(DATA_DIR, 'valid_straight_dataset.pkl')
+OW_ULT_CHARGE_SLANTED_VALID_DATASET_PKL = os.path.join(DATA_DIR, 'valid_slanted_dataset.pkl')
