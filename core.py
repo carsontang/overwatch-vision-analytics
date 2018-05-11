@@ -67,7 +67,7 @@ def load_mnist_data():
 
     return (x_train, y_train), (x_test, y_test), input_shape
 
-def load_straight_dataset(load_cached=False):
+def load_straight_dataset(load_cached=True):
     """
     Parse out tens and ones digits from each image,
     and straighten each digit
@@ -103,6 +103,9 @@ def load_straight_dataset(load_cached=False):
             directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
 
             for file in os.listdir(directory):
+                if file in ['.DS_Store']:
+                    continue
+
                 img = mpimg.imread(os.path.join(directory, file))
                 region = crop_region(img, ult_charge_bbox)
                 region = transform.warp(region, inverse_map=shear)
@@ -110,14 +113,14 @@ def load_straight_dataset(load_cached=False):
                 if tens_digit == 0:
                     digit = cv2.resize(crop_region(region, solo_ones_bbox), \
                                             warped_size, interpolation=cv2.INTER_LINEAR)
-                    digit = color.rgb2gray(digit)
+                    # digit = color.rgb2gray(digit)
                     x_valid.append(digit)
                     y_valid.append(ones_digit)
                 else:
                     tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
                     ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                    tens = color.rgb2gray(tens)
-                    ones = color.rgb2gray(ones)
+                    # tens = color.rgb2gray(tens)
+                    # ones = color.rgb2gray(ones)
                     x_valid.append(tens)
                     y_valid.append(tens_digit)
                     x_valid.append(ones)
@@ -170,6 +173,9 @@ def load_slanted_dataset(load_cached=False):
             directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
 
             for file in os.listdir(directory):
+                if file in ['.DS_Store']:
+                    continue
+
                 img = mpimg.imread(os.path.join(directory, file))
                 region = crop_region(img, ult_charge_bbox)
 
@@ -202,7 +208,7 @@ def load_slanted_dataset(load_cached=False):
     return x_valid, y_valid
 
 
-def load_synthetic_ow_ult_meter_data(load_cached=False):
+def load_synthetic_ow_ult_meter_data(load_cached=True):
     """
     Create a dataset that's like the MNIST dataset
     for the Overwatch Ult Charge meter. The digits are upright
@@ -233,7 +239,8 @@ def load_synthetic_ow_ult_meter_data(load_cached=False):
                     canvas = ImageDraw.Draw(image)
                     canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
                     np_image = np.array(image)
-                    x_train.append(color.rgb2gray(np_image))
+                    # np_image = color.rgb2gray(np_image)
+                    x_train.append(np_image)
                     y_train.append(digit)
 
         x_train, y_train = np.array(x_train), np.array(y_train)
@@ -300,6 +307,43 @@ def mnist_model(force_train=False, dataloader_fn=load_mnist_data):
     model.add(Dense(conf.NUM_CLASSES, activation='softmax'))
 
     model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adadelta(), metrics=['accuracy'])
+
+    model.fit(x_train, y_train, batch_size=conf.BATCH_SIZE, epochs=conf.EPOCHS, verbose=1, validation_data=(x_test, y_test))
+
+    timestamp = datetime.datetime.today()
+    epoch = int(timestamp.timestamp())
+    model.save('mnist_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
+    model.save_weights('mnist_weights_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
+
+    return model
+
+
+def ow_synthetic_model(force_train=False, dataloader_fn=load_synthetic_ow_ult_meter_data):
+    """
+    """
+    if not force_train and os.path.exists(conf.MNIST_MODEL_PATH):
+        print('Loading pretrained model...')
+        return load_model(conf.MNIST_MODEL_PATH)
+
+    print('Pretrained model does not exist. Training a model...')
+
+    (x_train, y_train), (x_test, y_test), input_shape = dataloader_fn()
+
+    model = Sequential()
+    model.add(Conv2D(12, kernel_size=(5, 5), activation=conf.ACTIVATION, input_shape=input_shape))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Dropout(conf.DROPOUT_RATE))
+    model.add(Conv2D(32, kernel_size=(5, 5), activation=conf.ACTIVATION))
+    model.add(MaxPooling2D((2, 2)))
+    model.add(Dropout(conf.DROPOUT_RATE))
+    model.add(Flatten())
+    model.add(Dense(120, activation=conf.ACTIVATION))
+    model.add(Dropout(conf.DROPOUT_RATE))
+    model.add(Dense(84, activation=conf.ACTIVATION))
+    model.add(Dropout(conf.DROPOUT_RATE))
+    model.add(Dense(conf.NUM_CLASSES, activation='softmax'))
+
+    model.compile(loss=keras.losses.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
 
     model.fit(x_train, y_train, batch_size=conf.BATCH_SIZE, epochs=conf.EPOCHS, verbose=1, validation_data=(x_test, y_test))
 

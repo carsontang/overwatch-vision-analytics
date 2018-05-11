@@ -5,8 +5,10 @@ MNIST_MODEL_PATH = os.path.join(MNIST_MODEL_DIR, 'mnist_2018_03_17.h5')
 
 """ Train/eval configs"""
 BATCH_SIZE = 128
-EPOCHS = 12
+EPOCHS = 8
 NUM_CLASSES = 10
+DROPOUT_RATE = 0.5
+ACTIVATION = 'elu'
 
 DATA_DIR = 'data'
 OW_ULT_CHARGE_EVAL_DATASET_DIR = '/Users/ctang/Documents/overwatch_object_detection/videos/01_26_2018_22_41_04_02'
