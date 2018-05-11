@@ -67,7 +67,8 @@ def load_mnist_data():
 
     return (x_train, y_train), (x_test, y_test), input_shape
 
-def load_straight_dataset(load_cached=True):
+
+def load_straight_grayscale_dataset(load_cached=False):
     """
     Parse out tens and ones digits from each image,
     and straighten each digit
@@ -113,14 +114,83 @@ def load_straight_dataset(load_cached=True):
                 if tens_digit == 0:
                     digit = cv2.resize(crop_region(region, solo_ones_bbox), \
                                             warped_size, interpolation=cv2.INTER_LINEAR)
-                    # digit = color.rgb2gray(digit)
+                    digit = color.rgb2gray(digit)
                     x_valid.append(digit)
                     y_valid.append(ones_digit)
                 else:
                     tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
                     ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                    # tens = color.rgb2gray(tens)
-                    # ones = color.rgb2gray(ones)
+                    tens = color.rgb2gray(tens)
+                    ones = color.rgb2gray(ones)
+                    x_valid.append(tens)
+                    y_valid.append(tens_digit)
+                    x_valid.append(ones)
+                    y_valid.append(ones_digit)
+
+        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'wb') as f:
+            pickle.dump((x_valid, y_valid), f)
+            print('Done serializing validation dataset.')
+
+    x_valid = np.array(x_valid)
+    y_valid = np.array(y_valid)
+    n, h, w, c = _shape(x_valid)
+    x_valid = x_valid.reshape(n, h, w, c)
+    y_valid = keras.utils.to_categorical(y_valid, conf.NUM_CLASSES)
+
+    return x_valid, y_valid
+
+
+def load_straight_rgb_dataset(load_cached=True):
+    """
+    Parse out tens and ones digits from each image,
+    and straighten each digit
+    """
+    tens_bbox = Bbox(x=2, y=0, w=15, h=30)
+    ones_bbox = Bbox(x=17, y=0, w=15, h=30)
+    solo_ones_bbox = Bbox(x=0, y=0, w=23, h=30)
+    ult_charge_bbox = Bbox(x=625, y=590, w=30, h=30)
+    shear = transform.AffineTransform(shear=0.2)
+    warped_size = (28, 28)
+
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
+        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
+            x_valid, y_valid = pickle.load(f)
+            print('Deserialized validation dataset from Pickle file.')
+    else:
+        x_valid = []
+        y_valid = []
+        directories = [file for file in os.listdir(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR)\
+                       if os.path.isdir(os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, file))]
+        ult_dirs = []
+        for file in directories:
+            m = re.search('(^\d{1,3}$)', file)
+            if m and m.groups():
+                ult_dirs.append(file)
+
+        for dirname in ult_dirs:
+            ult_charge = int(dirname)
+            tens_digit = ult_charge // 10
+            ones_digit = ult_charge % 10
+
+            print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
+            directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
+
+            for file in os.listdir(directory):
+                if file in ['.DS_Store']:
+                    continue
+
+                img = mpimg.imread(os.path.join(directory, file))
+                region = crop_region(img, ult_charge_bbox)
+                region = transform.warp(region, inverse_map=shear)
+
+                if tens_digit == 0:
+                    digit = cv2.resize(crop_region(region, solo_ones_bbox), \
+                                            warped_size, interpolation=cv2.INTER_LINEAR)
+                    x_valid.append(digit)
+                    y_valid.append(ones_digit)
+                else:
+                    tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
+                    ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
                     x_valid.append(tens)
                     y_valid.append(tens_digit)
                     x_valid.append(ones)
@@ -208,16 +278,16 @@ def load_slanted_dataset(load_cached=False):
     return x_valid, y_valid
 
 
-def load_synthetic_ow_ult_meter_data(load_cached=True):
+def load_synthetic_grayscale_ow_ult_meter_data(load_cached=False):
     """
     Create a dataset that's like the MNIST dataset
     for the Overwatch Ult Charge meter. The digits are upright
     instead of slanted.
     """
 
-    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL):
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL):
         print('Loading generated training dataset...')
-        with open(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL, 'rb') as f:
+        with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'rb') as f:
             x_train, y_train = pickle.load(f)
     else:
         print('Generating training dataset...')
@@ -239,43 +309,65 @@ def load_synthetic_ow_ult_meter_data(load_cached=True):
                     canvas = ImageDraw.Draw(image)
                     canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
                     np_image = np.array(image)
-                    # np_image = color.rgb2gray(np_image)
+                    np_image = color.rgb2gray(np_image)
                     x_train.append(np_image)
                     y_train.append(digit)
 
         x_train, y_train = np.array(x_train), np.array(y_train)
         y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
 
-        with open(conf.OW_ULT_CHARGE_SYNTHETIC_TRAIN_DATASET_PKL, 'wb') as f:
+        with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'wb') as f:
             pickle.dump((x_train, y_train), f)
             print('Done serializing training dataset.')
 
+    x_test, y_test = load_straight_grayscale_dataset(load_cached=True)
+    x_train, x_test, input_shape = _reshape(x_train, x_test)
+
+    return (x_train, y_train), (x_test, y_test), input_shape
+
+
+def load_synthetic_rgb_ow_ult_meter_data(load_cached=False):
     """
-    TODO:
-    
-    5/7/2018 - Make sure x_train, x_test, y_train, y_test have similar values
-    to the MNIST dataset.
-    
-    it looks like x_train already contains values 0 <= x <= 1
-    so there is no need to divide by 255. However, make sure its type
-    matches the MNIST x_train type
-    
-    MNIST
-    is 0 <= x_train <= 1? yes
-    is 0 <= x_test <= 1? yes
-    
-    OW
-    is 0 <= x_train <= 1? yes
-    is 0 <= x_test <= 1? yes
-    
-    test code:
-    np.any(x_train[100] > 1) or np.any(x_test[100] > 1)
-    
-    To understand the Keras training output,
-    know that the loss/accuracy is calculated per batch,
-    which in our case is 128 images.
+    Create a dataset that's like the MNIST dataset
+    for the Overwatch Ult Charge meter. The digits are upright
+    instead of slanted.
     """
-    x_test, y_test = load_straight_dataset()
+
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL):
+        print('Loading generated training dataset...')
+        with open(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL, 'rb') as f:
+            x_train, y_train = pickle.load(f)
+    else:
+        print('Generating training dataset...')
+        canvas_size = (28, 28)
+        upper_lefthand_corner = (8, -3)
+
+        font = ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), 32)
+        canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
+        text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
+
+        x_train = []
+        y_train = []
+
+        for digit in range(10):
+            print('Generating data for "%d"' % digit)
+            for canvas_color in canvas_colors:
+                for text_color in text_colors:
+                    image = PIL.Image.new("RGB", canvas_size, canvas_color)
+                    canvas = ImageDraw.Draw(image)
+                    canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
+                    np_image = np.array(image)
+                    x_train.append(np_image)
+                    y_train.append(digit)
+
+        x_train, y_train = np.array(x_train), np.array(y_train)
+        y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
+
+        with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'wb') as f:
+            pickle.dump((x_train, y_train), f)
+            print('Done serializing training dataset.')
+
+    x_test, y_test = load_straight_rgb_dataset()
     x_train, x_test, input_shape = _reshape(x_train, x_test)
 
     return (x_train, y_train), (x_test, y_test), input_shape
@@ -318,7 +410,7 @@ def mnist_model(force_train=False, dataloader_fn=load_mnist_data):
     return model
 
 
-def ow_synthetic_model(force_train=False, dataloader_fn=load_synthetic_ow_ult_meter_data):
+def ow_synthetic_model(force_train=False, dataloader_fn=load_synthetic_rgb_ow_ult_meter_data):
     """
     """
     if not force_train and os.path.exists(conf.MNIST_MODEL_PATH):
