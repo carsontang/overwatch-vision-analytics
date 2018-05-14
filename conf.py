@@ -5,7 +5,7 @@ MNIST_MODEL_PATH = os.path.join(MNIST_MODEL_DIR, 'mnist_2018_03_17.h5')
 
 """ Train/eval configs"""
 BATCH_SIZE = 128
-EPOCHS = 3
+EPOCHS = 8
 NUM_CLASSES = 10
 DROPOUT_RATE = 0.5
 ACTIVATION = 'elu'
