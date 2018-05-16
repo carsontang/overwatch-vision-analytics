@@ -122,10 +122,6 @@ def load_straight_dataset(preprocess_fn):
                 x_valid.append(ones)
                 y_valid.append(ones_digit)
 
-    with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'wb') as f:
-        pickle.dump((x_valid, y_valid), f)
-        print('Done serializing validation dataset.')
-
     x_valid = np.array(x_valid)
     y_valid = np.array(y_valid)
     n, h, w, c = _shape(x_valid)
@@ -141,14 +137,14 @@ def load_straight_grayscale_dataset(load_cached=False):
     and straighten each digit
     """
 
-    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
-        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_GRAYSCALE_DATASET_PKL):
+        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_GRAYSCALE_DATASET_PKL, 'rb') as f:
             x_valid, y_valid = pickle.load(f)
             print('Deserialized validation dataset from Pickle file.')
     else:
         x_valid, y_valid = load_straight_dataset(color.rgb2gray)
 
-        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'wb') as f:
+        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_GRAYSCALE_DATASET_PKL, 'wb') as f:
             pickle.dump((x_valid, y_valid), f)
             print('Done serializing validation dataset.')
 
@@ -161,13 +157,17 @@ def load_straight_rgb_dataset(load_cached=True):
     and straighten each digit
     """
 
-    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
-        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_RGB_DATASET_PKL):
+        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_RGB_DATASET_PKL, 'rb') as f:
             x_valid, y_valid = pickle.load(f)
             print('Deserialized validation dataset from Pickle file.')
     else:
         no_op = lambda image: image
         x_valid, y_valid = load_straight_dataset(no_op)
+
+        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_RGB_DATASET_PKL, 'wb') as f:
+            pickle.dump((x_valid, y_valid), f)
+            print('Done serializing validation dataset.')
 
     return x_valid, y_valid
 
