@@ -283,7 +283,7 @@ def load_synthetic_grayscale_ow_ult_meter_data(load_cached=False):
             pickle.dump((x_train, y_train), f)
             print('Done serializing training dataset.')
 
-    x_test, y_test = load_straight_grayscale_dataset(load_cached=True)
+    x_test, y_test = load_straight_grayscale_dataset(load_cached)
     x_train, x_test, input_shape = _reshape(x_train, x_test)
 
     return (x_train, y_train), (x_test, y_test), input_shape
@@ -330,7 +330,7 @@ def load_synthetic_rgb_ow_ult_meter_data(load_cached=False):
             pickle.dump((x_train, y_train), f)
             print('Done serializing training dataset.')
 
-    x_test, y_test = load_straight_rgb_dataset()
+    x_test, y_test = load_straight_rgb_dataset(load_cached)
     x_train, x_test, input_shape = _reshape(x_train, x_test)
 
     return (x_train, y_train), (x_test, y_test), input_shape
