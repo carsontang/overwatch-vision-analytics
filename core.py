@@ -326,7 +326,7 @@ def load_synthetic_rgb_ow_ult_meter_data(load_cached=False):
         x_train, y_train = np.array(x_train), np.array(y_train)
         y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
 
-        with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'wb') as f:
+        with open(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL, 'wb') as f:
             pickle.dump((x_train, y_train), f)
             print('Done serializing training dataset.')
 
