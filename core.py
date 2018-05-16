@@ -68,7 +68,7 @@ def load_mnist_data():
     return (x_train, y_train), (x_test, y_test), input_shape
 
 
-def load_straight_grayscale_dataset(load_cached=False):
+def load_straight_dataset(preprocess_fn):
     """
     Parse out tens and ones digits from each image,
     and straighten each digit
@@ -80,56 +80,51 @@ def load_straight_grayscale_dataset(load_cached=False):
     shear = transform.AffineTransform(shear=0.2)
     warped_size = (28, 28)
 
-    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
-        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
-            x_valid, y_valid = pickle.load(f)
-            print('Deserialized validation dataset from Pickle file.')
-    else:
-        x_valid = []
-        y_valid = []
-        directories = [file for file in os.listdir(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR)\
-                       if os.path.isdir(os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, file))]
-        ult_dirs = []
-        for file in directories:
-            m = re.search('(^\d{1,3}$)', file)
-            if m and m.groups():
-                ult_dirs.append(file)
+    x_valid = []
+    y_valid = []
+    directories = [file for file in os.listdir(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR)\
+                   if os.path.isdir(os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, file))]
+    ult_dirs = []
+    for file in directories:
+        m = re.search('(^\d{1,3}$)', file)
+        if m and m.groups():
+            ult_dirs.append(file)
 
-        for dirname in ult_dirs:
-            ult_charge = int(dirname)
-            tens_digit = ult_charge // 10
-            ones_digit = ult_charge % 10
+    for dirname in ult_dirs:
+        ult_charge = int(dirname)
+        tens_digit = ult_charge // 10
+        ones_digit = ult_charge % 10
 
-            print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
-            directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
+        print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
+        directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
 
-            for file in os.listdir(directory):
-                if file in ['.DS_Store']:
-                    continue
+        for file in os.listdir(directory):
+            if file in ['.DS_Store']:
+                continue
 
-                img = mpimg.imread(os.path.join(directory, file))
-                region = crop_region(img, ult_charge_bbox)
-                region = transform.warp(region, inverse_map=shear)
+            img = mpimg.imread(os.path.join(directory, file))
+            region = crop_region(img, ult_charge_bbox)
+            region = transform.warp(region, inverse_map=shear)
 
-                if tens_digit == 0:
-                    digit = cv2.resize(crop_region(region, solo_ones_bbox), \
-                                            warped_size, interpolation=cv2.INTER_LINEAR)
-                    digit = color.rgb2gray(digit)
-                    x_valid.append(digit)
-                    y_valid.append(ones_digit)
-                else:
-                    tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                    ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                    tens = color.rgb2gray(tens)
-                    ones = color.rgb2gray(ones)
-                    x_valid.append(tens)
-                    y_valid.append(tens_digit)
-                    x_valid.append(ones)
-                    y_valid.append(ones_digit)
+            if tens_digit == 0:
+                digit = cv2.resize(crop_region(region, solo_ones_bbox), \
+                                        warped_size, interpolation=cv2.INTER_LINEAR)
+                digit = preprocess_fn(digit)
+                x_valid.append(digit)
+                y_valid.append(ones_digit)
+            else:
+                tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
+                ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
+                tens = preprocess_fn(tens)
+                ones = preprocess_fn(ones)
+                x_valid.append(tens)
+                y_valid.append(tens_digit)
+                x_valid.append(ones)
+                y_valid.append(ones_digit)
 
-        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'wb') as f:
-            pickle.dump((x_valid, y_valid), f)
-            print('Done serializing validation dataset.')
+    with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'wb') as f:
+        pickle.dump((x_valid, y_valid), f)
+        print('Done serializing validation dataset.')
 
     x_valid = np.array(x_valid)
     y_valid = np.array(y_valid)
@@ -140,71 +135,39 @@ def load_straight_grayscale_dataset(load_cached=False):
     return x_valid, y_valid
 
 
-def load_straight_rgb_dataset(load_cached=True):
+def load_straight_grayscale_dataset(load_cached=False):
     """
     Parse out tens and ones digits from each image,
     and straighten each digit
     """
-    tens_bbox = Bbox(x=2, y=0, w=15, h=30)
-    ones_bbox = Bbox(x=17, y=0, w=15, h=30)
-    solo_ones_bbox = Bbox(x=0, y=0, w=23, h=30)
-    ult_charge_bbox = Bbox(x=625, y=590, w=30, h=30)
-    shear = transform.AffineTransform(shear=0.2)
-    warped_size = (28, 28)
 
     if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
             x_valid, y_valid = pickle.load(f)
             print('Deserialized validation dataset from Pickle file.')
     else:
-        x_valid = []
-        y_valid = []
-        directories = [file for file in os.listdir(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR)\
-                       if os.path.isdir(os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, file))]
-        ult_dirs = []
-        for file in directories:
-            m = re.search('(^\d{1,3}$)', file)
-            if m and m.groups():
-                ult_dirs.append(file)
-
-        for dirname in ult_dirs:
-            ult_charge = int(dirname)
-            tens_digit = ult_charge // 10
-            ones_digit = ult_charge % 10
-
-            print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
-            directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
-
-            for file in os.listdir(directory):
-                if file in ['.DS_Store']:
-                    continue
-
-                img = mpimg.imread(os.path.join(directory, file))
-                region = crop_region(img, ult_charge_bbox)
-                region = transform.warp(region, inverse_map=shear)
-
-                if tens_digit == 0:
-                    digit = cv2.resize(crop_region(region, solo_ones_bbox), \
-                                            warped_size, interpolation=cv2.INTER_LINEAR)
-                    x_valid.append(digit)
-                    y_valid.append(ones_digit)
-                else:
-                    tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                    ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                    x_valid.append(tens)
-                    y_valid.append(tens_digit)
-                    x_valid.append(ones)
-                    y_valid.append(ones_digit)
+        x_valid, y_valid = load_straight_dataset(color.rgb2gray)
 
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'wb') as f:
             pickle.dump((x_valid, y_valid), f)
             print('Done serializing validation dataset.')
 
-    x_valid = np.array(x_valid)
-    y_valid = np.array(y_valid)
-    n, h, w, c = _shape(x_valid)
-    x_valid = x_valid.reshape(n, h, w, c)
-    y_valid = keras.utils.to_categorical(y_valid, conf.NUM_CLASSES)
+    return x_valid, y_valid
+
+
+def load_straight_rgb_dataset(load_cached=True):
+    """
+    Parse out tens and ones digits from each image,
+    and straighten each digit
+    """
+
+    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL):
+        with open(conf.OW_ULT_CHARGE_SHEARED_VALID_DATASET_PKL, 'rb') as f:
+            x_valid, y_valid = pickle.load(f)
+            print('Deserialized validation dataset from Pickle file.')
+    else:
+        no_op = lambda image: image
+        x_valid, y_valid = load_straight_dataset(no_op)
 
     return x_valid, y_valid
 
@@ -404,8 +367,13 @@ def mnist_model(force_train=False, dataloader_fn=load_mnist_data):
 
     timestamp = datetime.datetime.today()
     epoch = int(timestamp.timestamp())
-    model.save('mnist_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
-    model.save_weights('mnist_weights_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
+    model_name = os.path.join(conf.MODEL_DIR, \
+                              'mnist_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
+    model.save(model_name)
+    model_weight = os.path.join(conf.MODEL_DIR, \
+                                'mnist_weights_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
+
+    model.save_weights(model_weight)
 
     return model
 
@@ -441,7 +409,13 @@ def ow_synthetic_model(force_train=False, dataloader_fn=load_synthetic_rgb_ow_ul
 
     timestamp = datetime.datetime.today()
     epoch = int(timestamp.timestamp())
-    model.save('mnist_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
-    model.save_weights('mnist_weights_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
+    model_name = os.path.join(conf.MODEL_DIR, \
+                              'mnist_%d_%d_%d_%d.h5' % (timestamp.year, timestamp.month, timestamp.day, epoch))
+    model.save(model_name)
+    model_weight = os.path.join(conf.MODEL_DIR, \
+                                'mnist_weights_%d_%d_%d_%d.h5' % (
+                                timestamp.year, timestamp.month, timestamp.day, epoch))
+
+    model.save_weights(model_weight)
 
     return model
