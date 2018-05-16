@@ -243,6 +243,36 @@ def load_slanted_dataset(load_cached=False):
     return x_valid, y_valid
 
 
+def _generate_ult_meter_data(preprocess_fn):
+    print('Generating training dataset...')
+    canvas_size = (28, 28)
+    upper_lefthand_corner = (8, -3)
+
+    font = ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), 32)
+    canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
+    text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
+
+    x_train = []
+    y_train = []
+
+    for digit in range(10):
+        print('Generating data for "%d"' % digit)
+        for canvas_color in canvas_colors:
+            for text_color in text_colors:
+                image = PIL.Image.new("RGB", canvas_size, canvas_color)
+                canvas = ImageDraw.Draw(image)
+                canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
+                np_image = np.array(image)
+                np_image = preprocess_fn(np_image)
+                x_train.append(np_image)
+                y_train.append(digit)
+
+    x_train, y_train = np.array(x_train), np.array(y_train)
+    y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
+
+    return x_train, y_train
+
+
 def load_synthetic_grayscale_ow_ult_meter_data(load_cached=False):
     """
     Create a dataset that's like the MNIST dataset
@@ -255,31 +285,7 @@ def load_synthetic_grayscale_ow_ult_meter_data(load_cached=False):
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'rb') as f:
             x_train, y_train = pickle.load(f)
     else:
-        print('Generating training dataset...')
-        canvas_size = (28, 28)
-        upper_lefthand_corner = (8, -3)
-
-        font = ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), 32)
-        canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
-        text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
-
-        x_train = []
-        y_train = []
-
-        for digit in range(10):
-            print('Generating data for "%d"' % digit)
-            for canvas_color in canvas_colors:
-                for text_color in text_colors:
-                    image = PIL.Image.new("RGB", canvas_size, canvas_color)
-                    canvas = ImageDraw.Draw(image)
-                    canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
-                    np_image = np.array(image)
-                    np_image = color.rgb2gray(np_image)
-                    x_train.append(np_image)
-                    y_train.append(digit)
-
-        x_train, y_train = np.array(x_train), np.array(y_train)
-        y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
+        x_train, y_train = _generate_ult_meter_data(color.rgb2gray)
 
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'wb') as f:
             pickle.dump((x_train, y_train), f)
@@ -303,30 +309,7 @@ def load_synthetic_rgb_ow_ult_meter_data(load_cached=False):
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL, 'rb') as f:
             x_train, y_train = pickle.load(f)
     else:
-        print('Generating training dataset...')
-        canvas_size = (28, 28)
-        upper_lefthand_corner = (8, -3)
-
-        font = ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), 32)
-        canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
-        text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
-
-        x_train = []
-        y_train = []
-
-        for digit in range(10):
-            print('Generating data for "%d"' % digit)
-            for canvas_color in canvas_colors:
-                for text_color in text_colors:
-                    image = PIL.Image.new("RGB", canvas_size, canvas_color)
-                    canvas = ImageDraw.Draw(image)
-                    canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
-                    np_image = np.array(image)
-                    x_train.append(np_image)
-                    y_train.append(digit)
-
-        x_train, y_train = np.array(x_train), np.array(y_train)
-        y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
+        x_train, y_train = _generate_ult_meter_data(_no_op)
 
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL, 'wb') as f:
             pickle.dump((x_train, y_train), f)
