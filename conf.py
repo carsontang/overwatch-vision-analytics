@@ -20,3 +20,5 @@ OW_ULT_CHARGE_VALID_DATASET_PKL = os.path.join(DATA_DIR, 'validation_dataset.pkl
 OW_ULT_CHARGE_SHEARED_VALID_GRAYSCALE_DATASET_PKL = os.path.join(DATA_DIR, 'valid_straight_grayscale_dataset.pkl')
 OW_ULT_CHARGE_SHEARED_VALID_RGB_DATASET_PKL = os.path.join(DATA_DIR, 'valid_straight_rgb_dataset.pkl')
 OW_ULT_CHARGE_SLANTED_VALID_DATASET_PKL = os.path.join(DATA_DIR, 'valid_slanted_dataset.pkl')
+
+MAX_WORKERS = 25

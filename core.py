@@ -1,10 +1,11 @@
 import collections
+import concurrent.futures
 import datetime
 import os
 import pickle
 import random
 import re
-import threading
+import time
 
 import cv2
 import matplotlib.image as mpimg
@@ -72,7 +73,7 @@ def load_mnist_data():
     return (x_train, y_train), (x_test, y_test), input_shape
 
 
-def worker(x_valid, y_valid, preprocess_fn, dirname):
+def worker(preprocess_fn, dirname):
     tens_bbox = Bbox(x=2, y=0, w=15, h=30)
     ones_bbox = Bbox(x=17, y=0, w=15, h=30)
     solo_ones_bbox = Bbox(x=0, y=0, w=23, h=30)
@@ -84,8 +85,9 @@ def worker(x_valid, y_valid, preprocess_fn, dirname):
     tens_digit = ult_charge // 10
     ones_digit = ult_charge % 10
 
-    print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
     directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
+
+    x_valid, y_valid = [], []
 
     for file in os.listdir(directory):
         if file in ['.DS_Store']:
@@ -136,15 +138,19 @@ def load_straight_dataset(preprocess_fn):
         if m and m.groups():
             ult_dirs.append(file)
 
-    threads = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=conf.MAX_WORKERS) as executor:
+        future_to_dirname = { executor.submit(worker, preprocess_fn, dirname) : dirname for dirname in ult_dirs }
 
-    for dirname in ult_dirs:
-        t = threading.Thread(target=worker, args=(x_valid, y_valid, preprocess_fn, dirname))
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
+        for future in concurrent.futures.as_completed(future_to_dirname):
+            dirname = future_to_dirname[future]
+            try:
+                x, y = future.result()
+            except Exception as e:
+                print('%s generated an exception: %s' % (dirname, e))
+            else:
+                print('Captured %d images from %s' % (len(x), dirname))
+                x_valid.extend(x)
+                y_valid.extend(y)
 
     x_valid = np.array(x_valid)
     y_valid = np.array(y_valid)
@@ -312,7 +318,10 @@ def load_synthetic_grayscale_ow_ult_meter_data(load_cached=False):
             pickle.dump((x_train, y_train), f)
             print('Done serializing training dataset.')
 
+    s = time.time()
     x_test, y_test = load_straight_grayscale_dataset(load_cached)
+    elapsed = time.time() - s
+    print('elapsed time: ', elapsed)
     x_train, x_test, input_shape = _reshape(x_train, x_test)
 
     return (x_train, y_train), (x_test, y_test), input_shape
