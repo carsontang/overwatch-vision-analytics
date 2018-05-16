@@ -29,6 +29,9 @@ from utils import crop_region
 
 Bbox = collections.namedtuple('Bbox', ['x', 'y', 'w', 'h'])
 
+def _no_op(image):
+    return image
+
 
 def _shape(x):
     n, h, w, *rest = x.shape
@@ -162,8 +165,7 @@ def load_straight_rgb_dataset(load_cached=True):
             x_valid, y_valid = pickle.load(f)
             print('Deserialized validation dataset from Pickle file.')
     else:
-        no_op = lambda image: image
-        x_valid, y_valid = load_straight_dataset(no_op)
+        x_valid, y_valid = load_straight_dataset(_no_op)
 
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_RGB_DATASET_PKL, 'wb') as f:
             pickle.dump((x_valid, y_valid), f)
