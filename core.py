@@ -4,6 +4,7 @@ import os
 import pickle
 import random
 import re
+import threading
 
 import cv2
 import matplotlib.image as mpimg
@@ -71,6 +72,48 @@ def load_mnist_data():
     return (x_train, y_train), (x_test, y_test), input_shape
 
 
+def worker(x_valid, y_valid, preprocess_fn, dirname):
+    tens_bbox = Bbox(x=2, y=0, w=15, h=30)
+    ones_bbox = Bbox(x=17, y=0, w=15, h=30)
+    solo_ones_bbox = Bbox(x=0, y=0, w=23, h=30)
+    ult_charge_bbox = Bbox(x=625, y=590, w=30, h=30)
+    shear = transform.AffineTransform(shear=0.2)
+    warped_size = (28, 28)
+
+    ult_charge = int(dirname)
+    tens_digit = ult_charge // 10
+    ones_digit = ult_charge % 10
+
+    print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
+    directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
+
+    for file in os.listdir(directory):
+        if file in ['.DS_Store']:
+            continue
+
+        img = mpimg.imread(os.path.join(directory, file))
+        region = crop_region(img, ult_charge_bbox)
+        region = transform.warp(region, inverse_map=shear)
+
+        if tens_digit == 0:
+            digit = cv2.resize(crop_region(region, solo_ones_bbox), \
+                               warped_size, interpolation=cv2.INTER_LINEAR)
+            digit = preprocess_fn(digit)
+            x_valid.append(digit)
+            y_valid.append(ones_digit)
+        else:
+            tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
+            ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
+            tens = preprocess_fn(tens)
+            ones = preprocess_fn(ones)
+            x_valid.append(tens)
+            y_valid.append(tens_digit)
+            x_valid.append(ones)
+            y_valid.append(ones_digit)
+
+    return x_valid, y_valid
+
+
 def load_straight_dataset(preprocess_fn):
     """
     Parse out tens and ones digits from each image,
@@ -93,37 +136,15 @@ def load_straight_dataset(preprocess_fn):
         if m and m.groups():
             ult_dirs.append(file)
 
+    threads = []
+
     for dirname in ult_dirs:
-        ult_charge = int(dirname)
-        tens_digit = ult_charge // 10
-        ones_digit = ult_charge % 10
+        t = threading.Thread(target=worker, args=(x_valid, y_valid, preprocess_fn, dirname))
+        threads.append(t)
+        t.start()
 
-        print('Capturing {} and {} for {}'.format(tens_digit, ones_digit, dirname))
-        directory = os.path.join(conf.OW_ULT_CHARGE_EVAL_DATASET_DIR, dirname)
-
-        for file in os.listdir(directory):
-            if file in ['.DS_Store']:
-                continue
-
-            img = mpimg.imread(os.path.join(directory, file))
-            region = crop_region(img, ult_charge_bbox)
-            region = transform.warp(region, inverse_map=shear)
-
-            if tens_digit == 0:
-                digit = cv2.resize(crop_region(region, solo_ones_bbox), \
-                                        warped_size, interpolation=cv2.INTER_LINEAR)
-                digit = preprocess_fn(digit)
-                x_valid.append(digit)
-                y_valid.append(ones_digit)
-            else:
-                tens = cv2.resize(crop_region(region, tens_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                ones = cv2.resize(crop_region(region, ones_bbox), warped_size, interpolation=cv2.INTER_LINEAR)
-                tens = preprocess_fn(tens)
-                ones = preprocess_fn(ones)
-                x_valid.append(tens)
-                y_valid.append(tens_digit)
-                x_valid.append(ones)
-                y_valid.append(ones_digit)
+    for t in threads:
+        t.join()
 
     x_valid = np.array(x_valid)
     y_valid = np.array(y_valid)
