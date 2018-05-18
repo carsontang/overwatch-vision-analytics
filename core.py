@@ -293,21 +293,20 @@ def _generate_ult_meter_data(preprocess_fn):
                 np_image = preprocess_fn(np_image)
                 x_train.append(np_image)
                 y_train.append(digit)
-
     x_train, y_train = np.array(x_train), np.array(y_train)
     y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
 
     return x_train, y_train
 
 
-def load_synthetic_grayscale_ow_ult_meter_data(load_cached=False):
+def load_synthetic_grayscale_ow_ult_meter_data(load_cached_train=False, load_cached_test=False):
     """
     Create a dataset that's like the MNIST dataset
     for the Overwatch Ult Charge meter. The digits are upright
     instead of slanted.
     """
 
-    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL):
+    if load_cached_train and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL):
         print('Loading generated training dataset...')
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'rb') as f:
             x_train, y_train = pickle.load(f)
@@ -318,23 +317,20 @@ def load_synthetic_grayscale_ow_ult_meter_data(load_cached=False):
             pickle.dump((x_train, y_train), f)
             print('Done serializing training dataset.')
 
-    s = time.time()
-    x_test, y_test = load_straight_grayscale_dataset(load_cached)
-    elapsed = time.time() - s
-    print('elapsed time: ', elapsed)
+    x_test, y_test = load_straight_grayscale_dataset(load_cached_test)
     x_train, x_test, input_shape = _reshape(x_train, x_test)
 
     return (x_train, y_train), (x_test, y_test), input_shape
 
 
-def load_synthetic_rgb_ow_ult_meter_data(load_cached=False):
+def load_synthetic_rgb_ow_ult_meter_data(load_cached_train=False, load_cached_test=False):
     """
     Create a dataset that's like the MNIST dataset
     for the Overwatch Ult Charge meter. The digits are upright
     instead of slanted.
     """
 
-    if load_cached and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL):
+    if load_cached_train and os.path.exists(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL):
         print('Loading generated training dataset...')
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL, 'rb') as f:
             x_train, y_train = pickle.load(f)
@@ -345,7 +341,7 @@ def load_synthetic_rgb_ow_ult_meter_data(load_cached=False):
             pickle.dump((x_train, y_train), f)
             print('Done serializing training dataset.')
 
-    x_test, y_test = load_straight_rgb_dataset(load_cached)
+    x_test, y_test = load_straight_rgb_dataset(load_cached_test)
     x_train, x_test, input_shape = _reshape(x_train, x_test)
 
     return (x_train, y_train), (x_test, y_test), input_shape
