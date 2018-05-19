@@ -270,29 +270,65 @@ def load_slanted_dataset(load_cached=False):
     return x_valid, y_valid
 
 
+def ow_synthetic_data_font(size):
+    return ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), size)
+
+
+def generate_digit(
+        digit,
+        canvas_color,
+        text_color=conf.WHITE,
+        text_size=32,
+        dx=0,
+        dy=0,
+        preprocess_fn=lambda x: x):
+
+    # Create canvas
+    image = PIL.Image.new("RGB", conf.CANVAS_SIZE, canvas_color)
+    canvas = ImageDraw.Draw(image)
+
+    x, y = conf.TOP_LEFT_CORNER
+    x, y = x + dx, y + dy
+
+    # Draw text on canvas
+    canvas.text(
+        (x, y),
+        str(digit),
+        font=ow_synthetic_data_font(text_size),
+        fill=text_color)
+
+    # Prepare for consumption by neural network
+    np_image = np.array(image)
+    np_image = preprocess_fn(np_image)
+
+    return np_image
+
+
 def _generate_ult_meter_data(preprocess_fn):
     print('Generating training dataset...')
-    canvas_size = (28, 28)
-    upper_lefthand_corner = (8, -3)
 
-    font = ImageFont.truetype(os.path.join(os.getcwd(), "data/big_noodle_titling_oblique.ttf"), 32)
     canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
     text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
 
     x_train = []
     y_train = []
 
+    # Make sure the training set is always consistent
+    random.seed(231)
+
     for digit in range(10):
         print('Generating data for "%d"' % digit)
         for canvas_color in canvas_colors:
             for text_color in text_colors:
-                image = PIL.Image.new("RGB", canvas_size, canvas_color)
-                canvas = ImageDraw.Draw(image)
-                canvas.text(upper_lefthand_corner, str(digit), font=font, fill=text_color)
-                np_image = np.array(image)
-                np_image = preprocess_fn(np_image)
+                for text_size in [32, 40]:
+                    dx = random.choice([-5, 5, -2, 2, 0])
+                    dy = random.choice([-2, 2, -1, 1, 0])
+                    np_image = generate_digit(digit, canvas_color, text_color, text_size, \
+                                              dx, dy, preprocess_fn)
+
                 x_train.append(np_image)
                 y_train.append(digit)
+
     x_train, y_train = np.array(x_train), np.array(y_train)
     y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
 
