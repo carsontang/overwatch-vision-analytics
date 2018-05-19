@@ -175,7 +175,7 @@ def load_straight_grayscale_dataset(load_cached=False):
         x_valid, y_valid = load_straight_dataset(color.rgb2gray)
 
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_GRAYSCALE_DATASET_PKL, 'wb') as f:
-            pickle.dump((x_valid, y_valid), f)
+            pickle.dump((x_valid, y_valid), f, protocol=4)
             print('Done serializing validation dataset.')
 
     return x_valid, y_valid
@@ -195,7 +195,7 @@ def load_straight_rgb_dataset(load_cached=True):
         x_valid, y_valid = load_straight_dataset(_no_op)
 
         with open(conf.OW_ULT_CHARGE_SHEARED_VALID_RGB_DATASET_PKL, 'wb') as f:
-            pickle.dump((x_valid, y_valid), f)
+            pickle.dump((x_valid, y_valid), f, protocol=4)
             print('Done serializing validation dataset.')
 
     return x_valid, y_valid
@@ -258,7 +258,7 @@ def load_slanted_dataset(load_cached=False):
                     y_valid.append(ones_digit)
 
         with open(conf.OW_ULT_CHARGE_SLANTED_VALID_DATASET_PKL, 'wb') as f:
-            pickle.dump((x_valid, y_valid), f)
+            pickle.dump((x_valid, y_valid), f, protocol=4)
             print('Done serializing validation dataset.')
 
     x_valid = np.array(x_valid)
@@ -314,7 +314,7 @@ def load_synthetic_grayscale_ow_ult_meter_data(load_cached_train=False, load_cac
         x_train, y_train = _generate_ult_meter_data(color.rgb2gray)
 
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_GRAYSCALE_TRAIN_DATASET_PKL, 'wb') as f:
-            pickle.dump((x_train, y_train), f)
+            pickle.dump((x_train, y_train), f, protocol=4)
             print('Done serializing training dataset.')
 
     x_test, y_test = load_straight_grayscale_dataset(load_cached_test)
@@ -338,7 +338,7 @@ def load_synthetic_rgb_ow_ult_meter_data(load_cached_train=False, load_cached_te
         x_train, y_train = _generate_ult_meter_data(_no_op)
 
         with open(conf.OW_ULT_CHARGE_SYNTHETIC_RGB_TRAIN_DATASET_PKL, 'wb') as f:
-            pickle.dump((x_train, y_train), f)
+            pickle.dump((x_train, y_train), f, protocol=4)
             print('Done serializing training dataset.')
 
     x_test, y_test = load_straight_rgb_dataset(load_cached_test)
