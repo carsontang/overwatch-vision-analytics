@@ -9,6 +9,7 @@ Jupyter notebooks with computer vision code that extract metadata out of Overwat
 * vary the background so that it's not just one solid color, but also horizontal and vertical stripes
 * account for the ult charge moving when the player jumps
   * to account for jumping, use a larger bbox to capture the ult charge, and remove the yellow ult meter with some image processing
+* go through this checklist: https://blog.slavv.com/37-reasons-why-your-neural-network-is-not-working-4020854bd607
 
 ## Flaws
 * validation data isn't uniform. Not all numbers are completely within the 28x28 box, nor are they centered. Jumping hasn't been factored in.
