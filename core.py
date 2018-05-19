@@ -347,7 +347,7 @@ def load_synthetic_rgb_ow_ult_meter_data(load_cached_train=False, load_cached_te
     return (x_train, y_train), (x_test, y_test), input_shape
 
 
-def mnist_model(force_train=False, dataloader_fn=load_mnist_data):
+def mnist_model(force_train=False, dataloader_fn=load_mnist_data, load_cached_train=False, load_cached_test=False):
     """
     Train a simple ConvNet on the MNIST dataset,
     or loads a pretrained model if one exists. MNIST-like data
@@ -360,7 +360,7 @@ def mnist_model(force_train=False, dataloader_fn=load_mnist_data):
 
     print('Pretrained model does not exist. Training a model...')
 
-    (x_train, y_train), (x_test, y_test), input_shape = dataloader_fn()
+    (x_train, y_train), (x_test, y_test), input_shape = dataloader_fn(load_cached_train, load_cached_test)
 
     model = Sequential()
     model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
