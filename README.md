@@ -15,3 +15,7 @@ Jupyter notebooks with computer vision code that extract metadata out of Overwat
 * validation data isn't uniform. Not all numbers are completely within the 28x28 box, nor are they centered. Jumping hasn't been factored in.
 * train and validation data might not be prepared the same way. They need to be preprocessed consistently.
 * only training with 8 epochs, try more to prove that the network is overfitting.
+* RGB train's canvas needs to be different from the text
+* [DONE] RGB train data isn't in the range 0-1
+* use Gaussian blur to make data more realistic
+* look at images that are being predicted correctly
