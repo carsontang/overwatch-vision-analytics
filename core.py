@@ -27,7 +27,7 @@ from keras.models import load_model
 from skimage import color, data, filters, io, transform
 
 import conf
-from utils import crop_region
+from utils import crop_region, distance
 
 Bbox = collections.namedtuple('Bbox', ['x', 'y', 'w', 'h'])
 
@@ -320,14 +320,20 @@ def _generate_ult_meter_data(preprocess_fn):
         print('Generating data for "%d"' % digit)
         for canvas_color in canvas_colors:
             for text_color in text_colors:
-                for text_size in [32, 40]:
-                    dx = random.choice([-5, 5, -2, 2, 0])
-                    dy = random.choice([-2, 2, -1, 1, 0])
+                for text_size in [32]:
+
+                    # Don't generate digits whose text aren't differentiable
+                    # from the background
+                    if distance(canvas_color, text_color) < conf.COLOR_DIFFERENCE_THRESHOLD:
+                        continue
+
+                    dx = random.choice([0])
+                    dy = random.choice([0])
                     np_image = generate_digit(digit, canvas_color, text_color, text_size, \
                                               dx, dy, preprocess_fn)
 
-                x_train.append(np_image)
-                y_train.append(digit)
+                    x_train.append(np_image)
+                    y_train.append(digit)
 
     x_train, y_train = np.array(x_train), np.array(y_train)
     y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)

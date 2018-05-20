@@ -1,3 +1,4 @@
+import math
 import random
 
 import numpy as np
@@ -6,6 +7,14 @@ import numpy as np
 def crop_region(full_image, bbox):
     x, y, w, h = bbox
     return full_image[y:y+h, x:x+w]
+
+
+def distance(rgb1, rgb2):
+    """
+    Return the Euclidean distance between the two RGB colors
+    """
+    diffs = np.array(rgb1) - np.array(rgb2)
+    return math.sqrt(np.sum(diffs**2))
 
 
 def _create_grid(images, indices, n_rows=4, n_cols=4):
