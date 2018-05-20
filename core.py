@@ -380,6 +380,9 @@ def load_synthetic_rgb_ow_ult_meter_data(load_cached_train=False, load_cached_te
     x_test, y_test = load_straight_rgb_dataset(load_cached_test)
     x_train, x_test, input_shape = _reshape(x_train, x_test)
 
+    x_train = x_train.astype('float32')
+    x_train /= 255
+
     return (x_train, y_train), (x_test, y_test), input_shape
 
 
