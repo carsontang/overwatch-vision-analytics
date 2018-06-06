@@ -2,6 +2,9 @@
 
 Jupyter notebooks with computer vision code that extract metadata out of Overwatch frames and videos.
 
+## Installation
+`conda env create -f environment.yml`
+
 ## Strategies for improving Ult charge recognition 
 * [DONE] gather more data, putting images in directories named after the ult charge
 * train with more epochs
