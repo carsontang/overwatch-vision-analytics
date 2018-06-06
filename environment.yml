@@ -24,6 +24,7 @@ dependencies:
     - pyqt=4.11.4
     - pytorch
     - requests
+    - tensorflow-gpu
     - torchvision
     - future
     - colour
