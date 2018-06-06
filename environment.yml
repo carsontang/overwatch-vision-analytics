@@ -27,3 +27,4 @@ dependencies:
     - torchvision
     - future
     - colour
+    - tqdm
