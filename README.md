@@ -19,3 +19,4 @@ Jupyter notebooks with computer vision code that extract metadata out of Overwat
 * [DONE] RGB train data isn't in the range 0-1
 * use Gaussian blur to make data more realistic
 * look at images that are being predicted correctly
+* shuffle the data before training

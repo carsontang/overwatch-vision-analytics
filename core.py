@@ -31,6 +31,7 @@ from utils import crop_region, distance
 
 Bbox = collections.namedtuple('Bbox', ['x', 'y', 'w', 'h'])
 
+
 def _no_op(image):
     return image
 
@@ -310,11 +311,13 @@ def _generate_ult_meter_data(preprocess_fn):
     canvas_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
     text_colors = [(r, g, b) for r in range(0, 256, 52) for g in range(0, 256, 52) for b in range(0, 256, 52)]
 
-    x_train = []
-    y_train = []
+    X = []
+    y = []
 
     # Make sure the training set is always consistent
     random.seed(231)
+
+    image_and_label_list = []
 
     for digit in range(10):
         print('Generating data for "%d"' % digit)
@@ -332,13 +335,19 @@ def _generate_ult_meter_data(preprocess_fn):
                     np_image = generate_digit(digit, canvas_color, text_color, text_size, \
                                               dx, dy, preprocess_fn)
 
-                    x_train.append(np_image)
-                    y_train.append(digit)
+                    image_and_label_list.append((np_image, digit))
 
-    x_train, y_train = np.array(x_train), np.array(y_train)
-    y_train = keras.utils.to_categorical(y_train, conf.NUM_CLASSES)
+    if conf.SHUFFLE_BATCH:
+        random.shuffle(image_and_label_list)
 
-    return x_train, y_train
+    for (image, label) in image_and_label_list:
+        X.append(image)
+        y.append(label)
+
+    X, y = np.array(X), np.array(y)
+    y = keras.utils.to_categorical(y, conf.NUM_CLASSES)
+
+    return X, y
 
 
 def load_synthetic_grayscale_ow_ult_meter_data(load_cached_train=False, load_cached_test=False):
