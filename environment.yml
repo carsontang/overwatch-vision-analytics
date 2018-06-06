@@ -8,7 +8,7 @@ dependencies:
     - numpy
     - matplotlib
     - jupyter
-    - keras==2.0.8
+    - keras==2.1.5
     - opencv==3.3.0
     - pillow
     - scikit-learn
@@ -27,8 +27,3 @@ dependencies:
     - torchvision
     - future
     - colour
-    - pip:
-        - moviepy
-        - tensorflow
-        - keras
-        - colored
