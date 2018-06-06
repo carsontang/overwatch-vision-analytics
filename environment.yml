@@ -9,7 +9,7 @@ dependencies:
     - matplotlib
     - jupyter
     - keras==2.1.5
-    - opencv==3.3.0
+    - opencv
     - pillow
     - scikit-learn
     - scikit-image
