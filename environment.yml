@@ -1,0 +1,34 @@
+name: cs231n
+channels:
+    - https://conda.anaconda.org/menpo
+    - conda-forge
+    - pytorch
+dependencies:
+    - python==3.5.2
+    - numpy
+    - matplotlib
+    - jupyter
+    - keras==2.0.8
+    - opencv==3.3.0
+    - pillow
+    - scikit-learn
+    - scikit-image
+    - scipy
+    - h5py
+    - eventlet
+    - flask-socketio
+    - seaborn
+    - pandas
+    - ffmpeg
+    - imageio=2.1.2
+    - pyqt=4.11.4
+    - pytorch
+    - requests
+    - torchvision
+    - future
+    - colour
+    - pip:
+        - moviepy
+        - tensorflow
+        - keras
+        - colored
