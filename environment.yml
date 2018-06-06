@@ -1,4 +1,4 @@
-name: cs231n
+name: overwatch-vision
 channels:
     - https://conda.anaconda.org/menpo
     - conda-forge
